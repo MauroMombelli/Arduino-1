@@ -26,7 +26,8 @@ void setup() {
   
   //String portName = Serial.list()[0];    // linux -> Ubuntu
   String portName = "/dev/ttyUSB0";        // linux -> Fedora
-  arduinoport = new Serial(this, portName, 9600);  // alloco la memoria e passo i parametri della seriale
+  arduinoport = new Serial(this, portName, 115200);  // alloco la memoria e passo i parametri della seriale
+  arduinoport.bufferUntil('\n'); //questo fa scatenare il serialEvent solo quando riceviamo un "\n"
   // Questo comando prepara l'anti-aliasing per la grafica
   smooth();
   // Sfondo, colore e dimensione
@@ -39,7 +40,7 @@ void setup() {
 /* DISEGNO LA SCHERMATA */
 void draw() {
   fill(0);                              // tutto nero
-  noStroke();                           // tutto si adatta alla finestra
+  noStroke();                           // non disegnare spessore linee
   ellipse(radius, radius, 750, 750);    // disegno il semicerchio
   rectMode(CENTER);                     // rettangoli centrati (x, y, larghezza, altezza)
   rect(350, 402, 800, 100);             
@@ -163,19 +164,18 @@ void draw() {
 
 /* Valori della porta seriale */
 void serialEvent (Serial arduinoport) {
- String xString = arduinoport.readStringUntil('\n');  
- if (xString != null) {  
-   xString = trim(xString); 
-   String getX = xString.substring(1, xString.indexOf("V")); 
-   String getV = xString.substring(xString.indexOf("V")+1, xString.length()); 
-   degree = Integer.parseInt(getX); 
-   value = Integer.parseInt(getV);
-   oldValue[degree] = newValue[degree]; 
-   newValue[degree] = value;  
-   /* conto per controllare i primi 2 passaggi del servo */
-   firstRun++;
-   if (firstRun > 360) {
-     firstRun = 360; 
-   }
+ String xString = arduinoport.readString();  //non serve aspettare lo "\n" o controllare per null perchè usaimo bufferUntil()
+ 
+ xString = trim(xString); 
+ String getX = xString.substring(1, xString.indexOf("V")); 
+ String getV = xString.substring(xString.indexOf("V")+1, xString.length()); 
+ degree = Integer.parseInt(getX); 
+ value = Integer.parseInt(getV);
+ oldValue[degree] = newValue[degree]; 
+ newValue[degree] = value;  
+ /* conto per controllare i primi 2 passaggi del servo */
+ firstRun++;
+ if (firstRun > 360) {
+   firstRun = 360; 
  }
 }
